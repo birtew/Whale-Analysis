@@ -1,5 +1,9 @@
-require(reshape2) # for colsplit
-
+require(CircStats) # for von Mises distribution
+require(boot) # for logit
+require(MASS)
+require(reshape2)
+require(stats)
+require(moveHMM)
 
 setwd("C:/Users/Patrick/Desktop/Whale") # you have to change this for you
 whalegps <- read.table("GPS_data_170921.txt", header=T, sep= "\t") # read the gps data
@@ -79,3 +83,14 @@ calculation for the lat and long variables by linear interpolation in the dive s
 whaledivestats$lat <- interpolationvalue(whaledivestats$begdescsec, whalegps$overallsec,whalegps$lat,10000000000)
 whaledivestats$long <- interpolationvalue(whaledivestats$begdescsec, whalegps$overallsec,whalegps$long,10000000000)
 
+
+#calculation of step and angle with moveHMM
+d <- prepData(data.frame(lat=whaledivestats$lat,long=whaledivestats$long), type="LL", coordNames = c("lat","long"))
+whaledivestats$step <- d$step
+whaledivestats$angle <- d$angle
+
+
+
+### create csv
+#write to new csv-file to prevent repeating the steps above everytime
+write.csv(data, file = "whale_data_cleaned.csv")
