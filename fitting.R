@@ -74,7 +74,7 @@ L<-function(parvect,x,N){ # parvect as working parameters with (divetim,maxdep,p
   Gamma <- diag(N)
   Gamma[!Gamma] <- para[10*N+1:10*N+((N-1)*N)]
   Gamma <- Gamma/rowSums(Gamma)
-  delta <- solve(t(diag(N)-Gamma+1),rep(1,N))
+  delta <- solve(t(diag(N)-Gamma+1),rep(1,N)) # hier kann man auch direkt delta aus pw2pn nehmen
   allprobs <- matrix(1,dim(x)[1],N)
   ind<-which(!is.na(x$angle))    #angle has the most NA, but we can also exclude this observations before.
   for (j in 1:N){
@@ -100,9 +100,18 @@ L<-function(parvect,x,N){ # parvect as working parameters with (divetim,maxdep,p
 mle <- function(obs,mu01,mu02,mu03,mu04,sigma01,sigma02,sigma03,sigma04,mu0,kappa0,gamma0,N){
         parvect <- pn2pw(mu01,mu02,mu03,mu04,sigma01,sigma02,sigma03,sigma04,mu0,kappa0,gamma0,N)
         obsl <- create_obslist(obs)
-        mod <- nlm(mllk,parvect,obsl,N,print.level=2,iterlim=1000,stepmax=5)
+        mod <- nlm(L,parvect,obsl,N,print.level=2,iterlim=1000,stepmax=5)
         pn <- pw2pn(mod$estimate,N)
         return(list(mu1=pn$mu1,mu2=pn$mu2,mu3=pn$mu3,mu4=pn$mu4,sigma1=pn$sigma1,sigma2=pn$sigma2,sigma3=pn$sigma3,sigma4=pn$sigma4,
                     mu=pn$mu,kappa=pn$kappa,gamma=pn$gamma,delta=pn$delta,mllk=mod$minimum))
 }               
+
                
+               
+fitmult <- function(obs,n_fits,N){
+        modl <- list()
+        for (i in 1:n_fits){
+                modl[[i]] <- mle(obs,mu01,mu02,mu03,mu04,sigma01,sigma02,sigma03,sigma04,mu0,kappa0,gamma0,N)
+        }
+        return(modl)
+}               
