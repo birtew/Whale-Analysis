@@ -9,6 +9,9 @@ require(moveHMM)
 setwd("C:/Users/Patrick/Desktop/Whale")
 whaledata <- read.csv("whale_data_cleaned.csv")
 
+
+
+ 
 ## function that converts 'natural' parameters (possibly constrained) to 'working' parameters (all of which are real-valued) - this is only necessary since I use the unconstrained optimizer nlm() below 
 # mu & kappa: von Mises distr.
 pn2pw <- function(mu1, mu2, mu3, mu4, sigma1, sigma2, sigma3, sigma4, mu, kappa, gamma){   #gamma as vector of offdiagonls
@@ -31,13 +34,19 @@ pn2pw <- function(mu1, mu2, mu3, mu4, sigma1, sigma2, sigma3, sigma4, mu, kappa,
 
 
 pw2pn <- function(parvect,N){     # parvct contains of mu, sigma as above, gamma
-  mu <- exp(c(parvect[1:(4*N)]))
-  sigma <- exp(c(parvect[(1+4*N):(8*N)]))
+  mu1 <- exp(c(parvect[1:(1*N)]))
+  mu2 <- exp(c(parvect[(N +1):(2*N)]))
+  mu3 <- exp(c(parvect[(2*N +1):(3*N)]))
+  mu4 <- exp(c(parvect[(3*N +1):(4*N)]))
+  sigma1 <- exp(c(parvect[(1+4*N):(5*N)]))
+  sigma2 <- exp(c(parvect[(1+5*N):(6*N)]))
+  sigma3 <- exp(c(parvect[(1+6*N):(7*N)]))
+  sigma4 <- exp(c(parvect[(1+7*N):(8*N)]))
   x <- parvect[(8*N+1):(9*N)]   # https://github.com/TheoMichelot/moveHMM/blob/master/R/w2n.R
   y <- parvect[(9*N+1):(10*N)]   
   mu <- Arg(x+1i*y)
   kappa <- sqrt(x^2+y^2)
-  gamma <- diag(N) # über gmma sollten wir nochmal reden
+  gamma <- diag(N) 
   if(N > 1){
     gamma[!gamma] <- exp(parvect[(10*N+1):(length(parvect))])
     gamma <- gamma/apply(gamma,1,sum)           
@@ -49,36 +58,36 @@ pw2pn <- function(parvect,N){     # parvct contains of mu, sigma as above, gamma
 
 #Next I will write my own function to fit an HMM based on roland code
 
-L<-function(parvect,x,N){ # parvect as working parameters with (divetim,maxdep,postdive,step,turn,matrix vectors for the off diagonals) variables with
+L<-function(parvect,obs,N){ # parvect as working parameters with (divetim,maxdep,postdive,step,turn,matrix vectors for the off diagonals) variables with
   para <- pw2pn(parvect, N)
-  mu.divetim <-para[1:N]
-  sigma.divetim <- para[N+1:2*N]
-  mu.maxdep <-para[2*N+1:3*N]
-  sigma.maxdep <- para[3*N+1:4*N]
-  mu.postdive.dur <- para[4*N+1:5*N]
-  sigma.postdive.dur <- para[5*N+1:6*N]
-  mu.step <- para[6*N+1:7*N]
-  sigma.step <- para[7*N+1:8*N]
-  mu.turn <- para[8*N+1:9*N] 
-  sigma.turn <- para[9*N+1:10*N]
+  mu.divetim <-para$mu1
+  sigma.divetim <- para$sigma1
+  mu.maxdep <-para$mu2
+  sigma.maxdep <- para$sigma2
+  mu.postdive.dur <- para$mu3
+  sigma.postdive.dur <- para$sigma3
+  mu.step <- para$mu4
+  sigma.step <- para$sigma4
+  mu.angle <- para$mu
+  kappa <- para$kappa
+  gamma <- matrix(para$gamma,N)
+  delta <- c(para$delta)
   
-  gamma <- matrix(para[(10*N+1):(10*N+N*(N-1))])
-  delta <- c(para[(10*N+N*(N-1)+1):(10*N+N*(N-1)+N)])
   
-  allprobs <- matrix(1,dim(x)[1],N)
-  ind<-which(!is.na(x$angle))    #angle has the most NA, but we can also exclude this observations before.
+  allprobs <- matrix(1,dim(obs)[1],N)
+  #ind<-which(!is.na(obs$angle))    #angle has the most NA, but we can also exclude this observations before.
   for (j in 1:N){
     allprobs[,j] <-
-      dgamma(x$divetim,shape=mu.divetim[j]^2/sigma.divetim[j]^2,scale=sigma.divetim[j]^2/mu.divetim[j])*
-      dgamma(x$maxdep,shape=mu.maxdep[j]^2/sigma.maxdep[j]^2,scale=sigma.maxdep[j]^2/mu.maxdep[j])*
-      dgamma(x$postdive.dur,shape=mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2,scale=sigma.postdive.dur[j]^2/mu.postdive.dur[j])*
-      dgamma(x$step,shape=mu.step[j]^2/sigma.step[j]^2,scale=sigma.step[j]^2/mu.step[j])*
-      dvm(x$turn,mu.turn[j],kappa[j])
+      dgamma(obs$divetim,shape=mu.divetim[j]^2/sigma.divetim[j]^2,scale=sigma.divetim[j]^2/mu.divetim[j])*
+      dgamma(obs$maxdep,shape=mu.maxdep[j]^2/sigma.maxdep[j]^2,scale=sigma.maxdep[j]^2/mu.maxdep[j])*
+      dgamma(obs$postdive.dur,shape=mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2,scale=sigma.postdive.dur[j]^2/mu.postdive.dur[j])*
+      dgamma(obs$step,shape=mu.step[j]^2/sigma.step[j]^2,scale=sigma.step[j]^2/mu.step[j])*
+      dvm(obs$angle,mu.angle[j],kappa[j])
   }
   foo <- delta%*%diag(allprobs[1,])
   l <- log(sum(foo))
   phi <- foo/sum(foo)
-  for (t in 2:length(x$divetim)){
+  for (t in 2:length(obs$divetim)){
     foo <- phi%*%gamma%*%diag(allprobs[t,])
     l <- l+log(sum(foo))
     phi <- foo/sum(foo)
@@ -109,4 +118,6 @@ fitmult <- function(obs,n_fits,N){
 
 ###
 mle(whaledata[(7:57),c(5,7,8,13,14)], c(20,40), c(4, 8), c(15,30), c(0.01, 0.03),
-      c(5, 10), c(1,2), c(5, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8), 2)
+    c(5, 10), c(1,2), c(5, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8), 2)
+
+
