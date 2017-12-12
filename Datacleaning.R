@@ -98,25 +98,36 @@ whaledivestats$angle <- d$angle
 plot(d)
 
 
+
 #
-splitset <- function(k,argument,data){
-  a <- which(argument >=k)
-  zr<-vector("list",length=length(a)+1)
-  zr[[1]] <- data[1:(a[1]-1),]
+splitset <- function(k, argument, dataset){
+  a <- which(argument >= k)
+  zr <- vector("list", length = length(a) + 1)
+  zr[[1]] <- dataset[1:(a[1]-1),]
   #zr <- data.frame()
   for (i in 2:length(a)) {
-    zr[[i]] <- data[(a[i-1]+1):(a[i]-1),]
+    zr[[i]] <- dataset[(a[i-1]+1):(a[i]-1),]
   }
-  zr[[length(a)+1]] <- data[(a[length(a)]+1):length(data),]
+  zr[[length(a)+1]] <- dataset[(a[length(a)]+1):length(argument),]
   return(zr)
 }
+
+
 k=20000
 argument <- whaledivestats$postdive.dur
-newdata<-splitset(k,argument,data)
+newdata <- splitset(k, argument, dataset)
 
-#a[0]
-#i=1
+
+
+
+## Nullen in postdive.dur löschen
+nozeros <- whaledivestats[(whaledivestats$postdive.dur > 0),]
+
+
+
 data <- whaledivestats
+#dataset <- whaledivestats
+data <- nozeros
 
 
 ### create csv
