@@ -11,6 +11,10 @@ setwd("~/Uni/(M.Sc.) 3. Semester/Statistical Consulting/Minke whale project")
 whaledata <- read.csv("whale_data_cleaned.csv")
 
 
+obs <- whaledata[(7:3583), c(5, 7, 8, 13, 14)]
+
+
+
 
 
 ## function that converts 'natural' parameters (possibly constrained) to 'working' parameters (all of which are real-valued) - this is only necessary since I use the unconstrained optimizer nlm() below 
@@ -156,7 +160,17 @@ fitmult <- function(obs, n_fits, N){
 ##
 
 #obs <- nozeros[(7:2720), c(5, 7, 8, 13, 14)]
-obs <- whaledata[(7:2722), c(5, 7, 8, 13, 14)]
+
+#obs <- whaledata[(7:2722), c(5, 7, 8, 13, 14)]
+obs <- whaledata[(7:3583), c(5, 7, 8, 13, 14)]
+obs <- obs[(obs$divetim > 1),]
+
+
+
+
+#nozeros <- whaledivestats[(whaledivestats$postdive.dur > 0),]
+
+
 
 ###################
 parvect <- pn2pw(c(20, 40), c(4, 8), c(15, 30), c(0.01, 0.03), c(5, 10), c(1, 2), c(5, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8))
@@ -167,6 +181,15 @@ parvect <- pn2pw(c(40, 100), c(10, 20), c(40, 65), c(0.01, 0.03),
 tsllk(parvect, obs, N)
 
 N=2
+
+
+###################
+mle(obs, c(20, 40), c(4, 8), c(15, 30), c(0.01, 0.03),
+    c(5, 10), c(1, 2), c(5, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8), c(0.2, 0.4), 2)
+# andere Startwerte:
+mod2 <- mle(obs, c(30, 200), c(20, 80), c(100, 600), c(10, 1000),
+      c(25, 70), c(10, 20), c(50, 90), c(50, 500), c(0.0), c(1,2), c(0.9, 0.8), c(0.25,0.25), 2)
+
 ###################
 
 mle(obs, c(20, 40), c(4, 8), c(15, 30), c(0.01, 0.03),
@@ -175,11 +198,18 @@ mle(obs, c(20, 40), c(4, 8), c(15, 30), c(0.01, 0.03),
 mle(obs, c(30, 200), c(20, 80), c(100, 600), c(0.01, 1),
       c(25, 70), c(10, 20), c(50, 90), c(0.05, 0.5), c(0.0), c(1,2), c(0.9, 0.8), c(0.25,0.25), 2)
 
-mle(obs, c(30, 200), c(20, 80), c(1, 6), c(0.01, 1),
-    c(25, 70), c(10, 20), c(50, 90), c(0.05, 0.5), c(0.0), c(1,2), c(0.9, 0.8), c(0.25,0.25), 2)
+
+
+
+mod3 <- mle(obs, c(30, 150, 250), c(20, 80, 110), c(50, 100, 600), c(10, 500, 1000),
+    c(25, 60, 70), c(10, 20, 30), c(30, 90, 100), c(50, 100, 500), c(0.0), c(1, 2, 2.5), c(0.5, 0.4, 0.3, 0.2, 0.25, 0.1), c(0.25, 0.375, 0.375), 3)
+
+
+#################
 
 mle(obs, c(30, 200, 400), c(20, 80, 110), c(100, 600, 2000), c(0.01, 1),
     c(25, 70, 60), c(10, 20, 10), c(50, 90, 100), c(0.05, 0.5), c(0.0), c(1,2), c(0.9, 0.8), c(0.25,0.25), 2)
+
 
 parvect<-c(3.205987e+00,  5.296187e+00 , 2.649179e+00,  4.358246e+00,
   4.214813e+00,  6.386805e+00, -4.230395e+00, -7.366967e-03,
@@ -200,6 +230,24 @@ plot(z,dgamma(z, shape =1.001, scale = 1),type="l")
 
 dgamma(0, shape =1, scale = 1)
 
+
+
+#####################################
+mu01 <- c(30, 150, 250)
+mu02 <- c(20, 80, 110)
+mu03 <- c(50, 100, 600)
+mu04 <- c(0.01, 0.5, 1)
+sigma01 <- c(25, 60, 70)
+sigma02 <- c(10, 20, 30)
+sigma03 <- c(30, 90, 100)
+sigma04 <- c(0.05, 0.1, 0.5)
+mu.vm <- c(0.0)
+kappa <- c(1, 2, 3)
+gamma <- c(0.5, 0.4, 0.3)
+pi0 <- c(0.25,0.25)
+N <- 3
+
+
 mu01 <- c(30, 200)
 mu02 <- c(20, 80)
 mu03 <- c(100, 600)
@@ -213,9 +261,78 @@ kappa <- c(1,2)
 gamma <- c(0.9, 0.8)
 pi0 <- c(0.25,0.25)
 N <- 2
+
   
 mle(obs, mu01, mu02, mu03, mu04, sigma01, sigma02, sigma03, sigma04, mu.vm, kappa, gamma, pi0, N)
 
 
+
+
+###################################################
+## debugging ##
+head(obs)
+obs[,1]
+hist(obs[,1])
+hist(obs[,1],breaks=1000)
+head(obs)
+obs[which(obs[,1]==1),2]
+obs[which(obs[,1]==1),3]
+obs[which(obs[,1]==1),4]
+hist(obs[which(obs[,1]==1),4])
+max(obs[which(obs[,1]==1),4])
+plot(obs[,4])
+plot(obs[,4],type="h")
+
+summary(obs[,1])
+##################################################
+
+
+
+## Plotting the 2-state-model solutions
+hist(obs$divetim,probability=TRUE,breaks = 30)
+z<-seq(0,600,by=0.01)
+lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu1[1]^2/mod2$sigma1[1]^2,scale=mod2$sigma1[1]^2/mod2$mu1[1]),col='blue',lwd=2)
+lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu1[2]^2/mod2$sigma1[2]^2,scale=mod2$sigma1[2]^2/mod2$mu1[2]),col='green',lwd=2)
+
+hist(obs$maxdep,probability=TRUE,breaks = 30)
+z<-seq(0,120,by=0.01)
+lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu2[1]^2/mod2$sigma2[1]^2,scale=mod2$sigma2[1]^2/mod2$mu2[1]),col='blue',lwd=2)
+lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu2[2]^2/mod2$sigma2[2]^2,scale=mod2$sigma2[2]^2/mod2$mu2[2]),col='green',lwd=2)
+
+hist(obs$postdive.dur,probability=TRUE,breaks = 30)
+z<-seq(0,5000,by=0.01)
+lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu3[1]^2/mod2$sigma3[1]^2,scale=mod2$sigma3[1]^2/mod2$mu3[1]),col='blue',lwd=2)
+lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu3[2]^2/mod2$sigma3[2]^2,scale=mod2$sigma3[2]^2/mod2$mu3[2]),col='green',lwd=2)
+
+hist(obs$step,probability=TRUE,breaks = 30)
+z<-seq(0,5000,by=0.01)
+lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu4[1]^2/mod2$sigma4[1]^2,scale=mod2$sigma4[1]^2/mod2$mu4[1]),col='blue',lwd=2)
+lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu4[2]^2/mod2$sigma4[2]^2,scale=mod2$sigma4[2]^2/mod2$mu4[2]),col='green',lwd=2)
+
+
+## Plotting the 3-state-model solutions
+hist(obs$divetim,probability=TRUE,breaks = 30)
+z<-seq(0,600,by=0.01)
+lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu1[1]^2/mod3$sigma1[1]^2,scale=mod3$sigma1[1]^2/mod3$mu1[1]),col='blue',lwd=2)
+lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu1[2]^2/mod3$sigma1[2]^2,scale=mod3$sigma1[2]^2/mod3$mu1[2]),col='green',lwd=2)
+lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu1[3]^2/mod3$sigma1[3]^2,scale=mod3$sigma1[3]^2/mod3$mu1[3]),col='red',lwd=2)
+
+hist(obs$maxdep,probability=TRUE,breaks = 30)
+z<-seq(0,120,by=0.01)
+lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu2[1]^2/mod3$sigma2[1]^2,scale=mod3$sigma2[1]^2/mod3$mu2[1]),col='blue',lwd=2)
+lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu2[2]^2/mod3$sigma2[2]^2,scale=mod3$sigma2[2]^2/mod3$mu2[2]),col='green',lwd=2)
+lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu2[3]^2/mod3$sigma2[3]^2,scale=mod3$sigma2[3]^2/mod3$mu2[3]),col='red',lwd=2)
+
+hist(obs$postdive.dur,probability=TRUE,breaks = 200, xlim=c(0,1000))
+z<-seq(0,1000,by=0.01)
+lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu3[1]^2/mod3$sigma3[1]^2,scale=mod3$sigma3[1]^2/mod3$mu3[1]),col='blue',lwd=2)
+lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu3[2]^2/mod3$sigma3[2]^2,scale=mod3$sigma3[2]^2/mod3$mu3[2]),col='green',lwd=2)
+lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu3[3]^2/mod3$sigma3[3]^2,scale=mod3$sigma3[3]^2/mod3$mu3[3]),col='red',lwd=2)
+
+hist(obs$step,probability=TRUE,breaks = 30)
+z<-seq(0,5000,by=0.01)
+lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu4[1]^2/mod3$sigma4[1]^2,scale=mod3$sigma4[1]^2/mod3$mu4[1]),col='blue',lwd=2)
+lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu4[2]^2/mod3$sigma4[2]^2,scale=mod3$sigma4[2]^2/mod3$mu4[2]),col='green',lwd=2)
+lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu4[3]^2/mod3$sigma4[3]^2,scale=mod3$sigma4[3]^2/mod3$mu4[3]),col='red',lwd=2)
 
 
