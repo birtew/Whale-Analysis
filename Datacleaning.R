@@ -113,21 +113,18 @@ splitset <- function(k, argument, dataset){
 }
 
 
-k=20000
-argument <- whaledivestats$postdive.dur
-newdata <- splitset(k, argument, dataset)
+#k=20000
+#argument <- whaledivestats$postdive.dur
+#newdata <- splitset(k, argument, dataset)
 
 
-
-
-## Nullen in postdive.dur löschen
-nozeros <- whaledivestats[(whaledivestats$postdive.dur > 0),]
 
 
 
 data <- whaledivestats
-#dataset <- whaledivestats
-data <- nozeros
+
+# transform steplength into meters
+data[,12] <- data[,12]*1000
 
 
 ### create csv
