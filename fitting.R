@@ -9,8 +9,12 @@ require(moveHMM)
 #setwd("C:/Users/Patrick/Desktop/Whale")
 setwd("~/Uni/(M.Sc.) 3. Semester/Statistical Consulting/Minke whale project")
 whaledata <- read.csv("whale_data_cleaned.csv")
+whaledata <- read.csv("whale_data_cleaned_k2000.csv")
+whaledata <- read.csv("whale_data_cleaned_k2000_speed.csv")
 
-
+#obs <- whaledata[(7:3583), c(5, 7, 8, 13, 14)]
+#obs <- obs[(obs$divetim > 1),]
+obs <- whaledata[, c(5, 7, 8, 13, 14)]
 
 
 ## function that converts 'natural' parameters (possibly constrained) to 'working' parameters (all of which are real-valued) - this is only necessary since I use the unconstrained optimizer nlm() below 
@@ -78,14 +82,14 @@ L<-function(parvect, obs, N){ # parvect as working parameters with (divetim,maxd
   pi <- para$pi
   
   allprobs <- matrix(1,dim(obs)[1],N)
-  #ind<-which(!is.na(obs$angle))    #angle has the most NA, but we can also exclude this observations before.
-  ma <- matrix(1,dim(obs)[1],N) #including the zero inflation
+  #ind<-which(!is.na(obs$angle))    # angle has the most NA, but we can also exclude this observations before.
+  ma <- matrix(1,dim(obs)[1],N) # including the zero inflation
   for (j in 1:N) {
-    for (i in 1:dim(obs)[1]) {
-      ma[i,j] <- pi[j]*(obs$postdive.dur[i] <= 0) + (1-pi[j])*(obs$postdive.dur[i] > 0)*dgamma(obs$postdive.dur[i], shape = mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2, scale = sigma.postdive.dur[j]^2/mu.postdive.dur[j])
-    }
+      ind<-which(obs$postdive.dur==0)
+      ma[ind,j] <- pgamma(obs$postdive.dur[ind]+0.5,shape=mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2,scale=sigma.postdive.dur[j]^2/mu.postdive.dur[j])
+      ma[-ind,j]<- pgamma(obs$postdive.dur[-ind]+0.5,shape=mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2,scale=sigma.postdive.dur[j]^2/mu.postdive.dur[j])-
+                   pgamma(obs$postdive.dur[-ind]-0.5,shape=mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2,scale=sigma.postdive.dur[j]^2/mu.postdive.dur[j])
   }
-  
   for (j in 1:N){
     allprobs[,j] <-
       dgamma(obs$divetim, shape = mu.divetim[j]^2/sigma.divetim[j]^2, scale = sigma.divetim[j]^2/mu.divetim[j])*
@@ -107,6 +111,7 @@ L<-function(parvect, obs, N){ # parvect as working parameters with (divetim,maxd
 }
 
 
+
 mle <- function(obs, mu01, mu02, mu03, mu04, sigma01, sigma02, sigma03, sigma04, mu0, kappa0, gamma0, pi0, N){
   parvect <- pn2pw(mu01, mu02, mu03, mu04, sigma01, sigma02, sigma03, sigma04, mu0, kappa0, gamma0, pi0)
   # obsl <- create_obslist(obs) 
@@ -117,11 +122,23 @@ mle <- function(obs, mu01, mu02, mu03, mu04, sigma01, sigma02, sigma03, sigma04,
 }               
 
 
+# ohne splitfunktion
+mle <- function(obs, mu01, mu02, mu03, mu04, sigma01, sigma02, sigma03, sigma04, mu0, kappa0, gamma0, pi0, N){
+  parvect <- pn2pw(mu01, mu02, mu03, mu04, sigma01, sigma02, sigma03, sigma04, mu0, kappa0, gamma0, pi0)
+  # obsl <- create_obslist(obs) 
+  mod <- nlm(L, parvect, obs, N, print.level = 2, iterlim = 1000, stepmax = 5) # replace L with tsllk
+  pn <- pw2pn(mod$estimate, N)
+  return(list(mu1 = pn$mu1, mu2 = pn$mu2, mu3 = pn$mu3, mu4 = pn$mu4, sigma1 = pn$sigma1, sigma2 = pn$sigma2, sigma3 = pn$sigma3, sigma4 = pn$sigma4,
+              mu = pn$mu, kappa = pn$kappa, gamma = pn$gamma, delta = pn$delta, pi=pn$pi, mllk = mod$minimum))
+}   
+
+
+
 # time series likelihood
 # a function which computes the likelihood for each time series after using the split function and adds the likelihoods
 tsllk <- function(parvect,obs,N){
   # split the dataset to omit outliers in argument
-  newdata <- splitset(k = 17000, argument = obs$postdive.dur, dataset = obs)
+  newdata <- splitset(k = 1800, argument = obs$postdive.dur, dataset = obs)
   # compute the likelihood for every subset and multiply them
   llk <- vector("list", length = length(newdata))
   llk[[1]] <- L(parvect, newdata[[1]], N)
@@ -131,6 +148,20 @@ tsllk <- function(parvect,obs,N){
   return(llk[[length(newdata)]])
 }
   
+
+
+# Splitset function
+splitset <- function(k, argument, dataset){
+  a <- which(argument >= k)
+  zr <- vector("list", length = length(a) + 1)
+  zr[[1]] <- dataset[1:(a[1]-1),]
+  #zr <- data.frame()
+  for (i in 2:length(a)) {
+    zr[[i]] <- dataset[(a[i-1]+1):(a[i]-1),]
+  }
+  zr[[length(a)+1]] <- dataset[(a[length(a)]+1):length(argument),]
+  return(zr)
+}
   
 
   
@@ -146,54 +177,107 @@ fitmult <- function(obs, n_fits, N){
 
 
 ################################################################################################################
-### Testing and fitting
-#mle(whaledata[(7:57), c(5, 7, 8, 13, 14)], c(20, 40), c(4, 8), c(15, 30), c(0.01, 0.03),
-#    c(5, 10), c(1, 2), c(5, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8), 2)
+### Testing and fitting ###
+###########################
+# 2 states
+whale_mod2 <- mle(obs, c(30, 200), c(20, 80), c(100, 600), c(10, 1000),
+      c(25, 70), c(10, 20), c(50, 90), c(50, 500), c(0.0), c(1,2), c(0.9, 0.8), c(0.25,0.25), 2)
+
+# 3 states
+whale_mod3 <- mle(obs, c(30, 150, 250), c(20, 80, 110), c(50, 100, 600), c(10, 500, 1000),
+    c(25, 60, 70), c(10, 20, 30), c(30, 90, 100), c(50, 100, 500), c(0.0), c(1, 2, 2.5), c(0.5, 0.4, 0.3, 0.2, 0.25, 0.1), c(0.25, 0.375, 0.375), 3)
 
 
-#mle(whaledata[(600:750), c(5, 7, 8, 13, 14)], c(40, 100), c(10, 20), c(40, 65), c(0.01, 0.03),
-#    c(10, 15), c(3, 5), c(15, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8), 2)
-##
+## zufällig gezogene Startwerte:
+# 2 states
+whale_rmod2 <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2, 1, 600)), c(runif(2, 1, 1000)),
+                  c(runif(2, 1, 100)), c(runif(2, 1, 50)), c(runif(2, 1, 100)), c(runif(2, 1, 500)), 
+                  c(0.0), c(1, 2), c(runif(2, 0, 1)), c(runif(2, 0, 1)), 2)
 
-#obs <- nozeros[(7:2720), c(5, 7, 8, 13, 14)]
-obs <- whaledata[(7:2722), c(5, 7, 8, 13, 14)]
+# 3 states
+whale_rmod3 <- mle(obs, c(runif(3, 1, 250)), c(runif(3, 1, 120)), c(runif(3, 1, 600)), c(runif(3, 1, 1000)),
+                   c(runif(3, 1, 100)), c(runif(3, 1, 50)), c(runif(3, 1, 100)), c(runif(3, 1, 500)), 
+                   c(0.0), c(1, 2, 3), c(runif(3, 0, 1)), c(runif(3, 0, 1)), 3)
 
-###################
-parvect <- pn2pw(c(20, 40), c(4, 8), c(15, 30), c(0.01, 0.03), c(5, 10), c(1, 2), c(5, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8))
-para <- pw2pn(parvect, N)
 
-parvect <- pn2pw(c(40, 100), c(10, 20), c(40, 65), c(0.01, 0.03), 
-                 c(10, 15), c(3, 5), c(15, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8))
-tsllk(parvect, obs, N)
+## Dealing with lokal maxima
+# 2 states:
+llks<-rep(NA,10)
+mods<-vector("list")
+for (k in 1:10){
+  mods[[k]] <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2, 1, 600)), c(runif(2, 1, 1000)),
+                   c(runif(2, 1, 100)), c(runif(2, 1, 50)), c(runif(2, 1, 100)), c(runif(2, 1, 500)), 
+                   c(0.0), c(1, 2), c(runif(2, 0, 1)), c(runif(2, 0, 1)), 2)
+  llks[k] <- -mods[[k]]$mllk #minimum
+}
+mods[[which.max(llks)]]
 
-N=2
-###################
 
-mle(obs, c(20, 40), c(4, 8), c(15, 30), c(0.01, 0.03),
-    c(5, 10), c(1, 2), c(5, 20), c(0.05, 0.03), c(0.0), c(1,2), c(0.9, 0.8), c(0.2, 0.4), 2)
-# andere Startwerte:
-mle(obs, c(30, 200), c(20, 80), c(100, 600), c(0.01, 1),
-      c(25, 70), c(10, 20), c(50, 90), c(0.05, 0.5), c(0.0), c(1,2), c(0.9, 0.8), c(0.25,0.25), 2)
 
-mle(obs, c(30, 200, 400), c(20, 80, 110), c(100, 600, 2000), c(0.01, 1),
-    c(25, 70, 60), c(10, 20, 10), c(50, 90, 100), c(0.05, 0.5), c(0.0), c(1,2), c(0.9, 0.8), c(0.25,0.25), 2)
 
-mu01 <- c(30, 200)
-mu02 <- c(20, 80)
-mu03 <- c(100, 600)
-mu04 <- c(0.01, 1)
-sigma01 <- c(25, 70)
-sigma02 <- c(10, 20)
-sigma03 <- c(50, 90)
-sigma04 <- c(0.05, 0.5)
+#####################################
+mu01 <- c(30, 150, 250)
+mu02 <- c(20, 80, 110)
+mu03 <- c(50, 100, 600)
+mu04 <- c(0.01, 0.5, 1)
+sigma01 <- c(25, 60, 70)
+sigma02 <- c(10, 20, 30)
+sigma03 <- c(30, 90, 100)
+sigma04 <- c(50, 100, 500)
 mu.vm <- c(0.0)
-kappa <- c(1,2)
-gamma <- c(0.9, 0.8)
+kappa <- c(1, 2, 3)
+gamma <- c(0.5, 0.4, 0.3)
 pi0 <- c(0.25,0.25)
-N <- 2
-  
+N <- 3
+
 mle(obs, mu01, mu02, mu03, mu04, sigma01, sigma02, sigma03, sigma04, mu.vm, kappa, gamma, pi0, N)
 
 
 
 
+
+###########################################################################
+# Debugging
+parvect<-c(3.205987e+00,  5.296187e+00 , 2.649179e+00,  4.358246e+00,
+  4.214813e+00,  6.386805e+00, -4.230395e+00, -7.366967e-03,
+  3.477124e+00 , 4.248472e+00,  2.386330e+00,  3.007819e+00,
+  4.214810e+00,  4.504521e+00, -3.282264e+00, -6.886374e-01,
+  1.133471e+00,  2.000357e+00, -3.202339e-04, -5.464697e-05,
+  2.197357e+00,  1.179702e+00, -1.099844e+00, -1.098335e+00)
+
+j=1
+z<-seq(67.67101,67.69161,length=10000)
+plot(z,dgamma(68, shape = mu.postdive.dur[j]^2/z^2, scale = z^2/mu.postdive.dur[j]))
+
+z<-seq(0,1,length=10000)
+#par(mfrow=(3,1))
+plot(z,dgamma(z, shape =1, scale = 1))
+plot(z,dgamma(z, shape =0.999, scale = 1))
+plot(z,dgamma(z, shape =1.001, scale = 1),type="l")
+
+dgamma(0, shape =1, scale = 1)
+
+###################################################
+## debugging ##
+head(obs)
+obs[,1]
+hist(obs[,1])
+hist(obs[,1],breaks=1000)
+head(obs)
+obs[which(obs[,1]==1),2]
+obs[which(obs[,1]==1),3]
+obs[which(obs[,1]==1),4]
+hist(obs[which(obs[,1]==1),4])
+max(obs[which(obs[,1]==1),4])
+plot(obs[,4])
+plot(obs[,4],type="h")
+
+summary(obs[,1])
+##################################################
+
+
+#########
+speed <- obs$step / obs$divetim
+boxplot(speed)
+which(speed > 11)
+summary(speed)
