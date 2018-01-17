@@ -1,52 +1,55 @@
-#######################
-## Creating the plots
+########################
+## Creating the plots ##
+########################
+
+obs2 <- obs[(obs$postdive.dur < 1800),]
+obs_new2 <- obs_new[(obs_new$postdive.dur < 1800),]
+
+
+colpal <- c("#80cdc1", "gold", "#003c30") 
+
+
+
 
 ## Plotting the 2-state-model solutions
-hist(obs$divetim,probability=TRUE,breaks = 30)
+hist(obs_new2$divetim,probability=TRUE,breaks = 30, xlab = 'Divetime', main = 'State-dependent Distribution Divetime')
 z<-seq(0,600,by=0.01)
-lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu1[1]^2/mod2$sigma1[1]^2,scale=mod2$sigma1[1]^2/mod2$mu1[1]),col='blue',lwd=2)
-lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu1[2]^2/mod2$sigma1[2]^2,scale=mod2$sigma1[2]^2/mod2$mu1[2]),col='green',lwd=2)
+lines(z,model2$delta[1]*dgamma(z,shape=model2$mu1[1]^2/model2$sigma1[1]^2,scale=model2$sigma1[1]^2/model2$mu1[1]),col=colpal[1],lwd=2)
+lines(z,model2$delta[2]*dgamma(z,shape=model2$mu1[2]^2/model2$sigma1[2]^2,scale=model2$sigma1[2]^2/model2$mu1[2]),col=colpal[2],lwd=2)
 
-hist(obs$maxdep,probability=TRUE,breaks = 30)
-z<-seq(0,120,by=0.01)
-lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu2[1]^2/mod2$sigma2[1]^2,scale=mod2$sigma2[1]^2/mod2$mu2[1]),col='blue',lwd=2)
-lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu2[2]^2/mod2$sigma2[2]^2,scale=mod2$sigma2[2]^2/mod2$mu2[2]),col='green',lwd=2)
+hist(obs_new2$maxdep+5,probability=TRUE,breaks = 50, xlim = c(0, 120), xlab = 'Maximum depth', main = 'State-dependent Distribution Maximum Depth')
+z<-seq(5,120,by=0.01)
+lines(z,model2$delta[1]*dgamma(z-5,shape=model2$mu2[1]^2/model2$sigma2[1]^2,scale=model2$sigma2[1]^2/model2$mu2[1]),col=colpal[1],lwd=2)
+lines(z,model2$delta[2]*dgamma(z-5,shape=model2$mu2[2]^2/model2$sigma2[2]^2,scale=model2$sigma2[2]^2/model2$mu2[2]),col=colpal[2],lwd=2)
 
-hist(obs$postdive.dur,probability=TRUE,breaks = 100, xlim = c(0, 1500))
-z<-seq(0,1500,by=0.01)
-lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu3[1]^2/mod2$sigma3[1]^2,scale=mod2$sigma3[1]^2/mod2$mu3[1]),col='blue',lwd=2)
-lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu3[2]^2/mod2$sigma3[2]^2,scale=mod2$sigma3[2]^2/mod2$mu3[2]),col='green',lwd=2)
+hist(obs_new2$postdive.dur,probability=TRUE,breaks = 1000, xlim = c(0, 250), ylim = c(0, 0.05), xlab = 'Postdive Duration', main = 'State-dependent Distribution Postdive Duration')
+z<-seq(0,250,by=0.01)
+lines(z,model2$delta[1]*dgamma(z,shape=model2$mu3[1]^2/model2$sigma3[1]^2,scale=model2$sigma3[1]^2/model2$mu3[1]),col=colpal[1],lwd=2)
+lines(z,model2$delta[2]*dgamma(z,shape=model2$mu3[2]^2/model2$sigma3[2]^2,scale=model2$sigma3[2]^2/model2$mu3[2]),col=colpal[2],lwd=2)
 
-hist(obs$step,probability=TRUE,breaks = 100, xlim = c(0, 1500))
-z<-seq(0,1500,by=0.01)
-lines(z,mod2$delta[1]*dgamma(z,shape=mod2$mu4[1]^2/mod2$sigma4[1]^2,scale=mod2$sigma4[1]^2/mod2$mu4[1]),col='blue',lwd=2)
-lines(z,mod2$delta[2]*dgamma(z,shape=mod2$mu4[2]^2/mod2$sigma4[2]^2,scale=mod2$sigma4[2]^2/mod2$mu4[2]),col='green',lwd=2)
 
 
 ## Plotting the 3-state-model solutions
-hist(obs$divetim,probability=TRUE,breaks = 30)
+hist(obs_new2$divetim,probability=TRUE,breaks = 100, xlab = 'Divetime', main = 'State-dependent Distribution Divetime')
 z<-seq(0,600,by=0.01)
-lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu1[1]^2/mod3$sigma1[1]^2,scale=mod3$sigma1[1]^2/mod3$mu1[1]),col='blue',lwd=2)
-lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu1[2]^2/mod3$sigma1[2]^2,scale=mod3$sigma1[2]^2/mod3$mu1[2]),col='green',lwd=2)
-lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu1[3]^2/mod3$sigma1[3]^2,scale=mod3$sigma1[3]^2/mod3$mu1[3]),col='red',lwd=2)
+lines(z,model3$delta[1]*dgamma(z,shape=model3$mu1[1]^2/model3$sigma1[1]^2,scale=model3$sigma1[1]^2/model3$mu1[1]),col=colpal[1],lwd=2)
+lines(z,model3$delta[2]*dgamma(z,shape=model3$mu1[2]^2/model3$sigma1[2]^2,scale=model3$sigma1[2]^2/model3$mu1[2]),col=colpal[2],lwd=2)
+lines(z,model3$delta[3]*dgamma(z,shape=model3$mu1[3]^2/model3$sigma1[3]^2,scale=model3$sigma1[3]^2/model3$mu1[3]),col=colpal[3],lwd=2)
 
-hist(obs$maxdep,probability=TRUE,breaks = 30)
-z<-seq(0,120,by=0.01)
-lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu2[1]^2/mod3$sigma2[1]^2,scale=mod3$sigma2[1]^2/mod3$mu2[1]),col='blue',lwd=2)
-lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu2[2]^2/mod3$sigma2[2]^2,scale=mod3$sigma2[2]^2/mod3$mu2[2]),col='green',lwd=2)
-lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu2[3]^2/mod3$sigma2[3]^2,scale=mod3$sigma2[3]^2/mod3$mu2[3]),col='red',lwd=2)
+# maxdep um 5 verschoben
+hist(obs_new2$maxdep+5,probability=TRUE,breaks = 100, xlim = c(0, 120), xlab = 'Maximum depth', main = 'State-dependent Distribution Maximum Depth')
+z<-seq(5,120,by=0.01)
+lines(z,model3$delta[1]*dgamma(z-5,shape=model3$mu2[1]^2/model3$sigma2[1]^2,scale=model3$sigma2[1]^2/model3$mu2[1]),col=colpal[1],lwd=2)
+lines(z,model3$delta[2]*dgamma(z-5,shape=model3$mu2[2]^2/model3$sigma2[2]^2,scale=model3$sigma2[2]^2/model3$mu2[2]),col=colpal[2],lwd=2)
+lines(z,model3$delta[3]*dgamma(z-5,shape=model3$mu2[3]^2/model3$sigma2[3]^2,scale=model3$sigma2[3]^2/model3$mu2[3]),col=colpal[3],lwd=2)
 
-hist(obs$postdive.dur,probability=TRUE,breaks = 200, xlim=c(0,1000))
-z<-seq(0,1000,by=0.01)
-lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu3[1]^2/mod3$sigma3[1]^2,scale=mod3$sigma3[1]^2/mod3$mu3[1]),col='blue',lwd=2)
-lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu3[2]^2/mod3$sigma3[2]^2,scale=mod3$sigma3[2]^2/mod3$mu3[2]),col='green',lwd=2)
-lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu3[3]^2/mod3$sigma3[3]^2,scale=mod3$sigma3[3]^2/mod3$mu3[3]),col='red',lwd=2)
+hist(obs_new2$postdive.dur,probability=TRUE,breaks = 1000, xlim=c(0,250), ylim = c(0, 0.05), xlab = 'Postdive Duration', main = 'State-dependent Distribution Postdive Duration')
+z<-seq(0,250,by=0.01)
+lines(z,model3$delta[1]*dgamma(z,shape=model3$mu3[1]^2/model3$sigma3[1]^2,scale=model3$sigma3[1]^2/model3$mu3[1]),col=colpal[1],lwd=2)
+lines(z,model3$delta[2]*dgamma(z,shape=model3$mu3[2]^2/model3$sigma3[2]^2,scale=model3$sigma3[2]^2/model3$mu3[2]),col=colpal[2],lwd=2)
+lines(z,model3$delta[3]*dgamma(z,shape=model3$mu3[3]^2/model3$sigma3[3]^2,scale=model3$sigma3[3]^2/model3$mu3[3]),col=colpal[3],lwd=2)
 
-hist(obs$step,probability=TRUE,breaks = 200, xlim = c(0, 1000))
-z<-seq(0,1000,by=0.01)
-lines(z,mod3$delta[1]*dgamma(z,shape=mod3$mu4[1]^2/mod3$sigma4[1]^2,scale=mod3$sigma4[1]^2/mod3$mu4[1]),col='blue',lwd=2)
-lines(z,mod3$delta[2]*dgamma(z,shape=mod3$mu4[2]^2/mod3$sigma4[2]^2,scale=mod3$sigma4[2]^2/mod3$mu4[2]),col='green',lwd=2)
-lines(z,mod3$delta[3]*dgamma(z,shape=mod3$mu4[3]^2/mod3$sigma4[3]^2,scale=mod3$sigma4[3]^2/mod3$mu4[3]),col='red',lwd=2)
+
 
 
 
@@ -79,7 +82,7 @@ viterbi<-function(obs, mu1, mu2, mu3, sigma1, sigma2, sigma3, gamma, delta, N){
       ma[,j]
   }
   
-  xi <- matrix(0,n,2)
+  xi <- matrix(0,n,N)
   foo <- delta*allprobs[1,]
   xi[1,] <- foo/sum(foo)
   for (i in 2:n){
@@ -96,22 +99,45 @@ viterbi<-function(obs, mu1, mu2, mu3, sigma1, sigma2, sigma3, gamma, delta, N){
 
 obs2 <- obs[(obs$postdive.dur < 1800),]
 
-states <- viterbi(obs2, unlist(whale_dive_rmod2$mu1), unlist(whale_dive_rmod2$mu2), unlist(whale_dive_rmod2$mu3), 
-        unlist(whale_dive_rmod2$sigma1), unlist(whale_dive_rmod2$sigma2), unlist(whale_dive_rmod2$sigma3),
-        unlist(whale_dive_rmod2$gamma), unlist(whale_dive_rmod2$delta), 2)
+states2 <- viterbi(obs_new2, c(model2$mu1), c(model2$mu2), c(model2$mu3), 
+        c(model2$sigma1), c(model2$sigma2), c(model2$sigma3),
+        c(model2$gamma), c(model2$delta), 2)
 
-#######
-plot(obs2$divetim[1:100])
 
-#plot the results:
-b <- seq(-bm,bm,length=m+1)                 
-h <- b[2]-b[1]                              
-bstar <- (b[-1]+b[-(m+1)])*0.5              
-vola <- bstar[states] # Viterbi-decoded volatility levels
 
-par(mfrow=c(2,1))
-plot(obs2$divetim,type="l",xlab="time",ylab="daily returns",main="time series of Deutsch Bank share returns",cex.main=1.2)
-plot(vola,type="l",xlab="time",ylab="decoded (log-)volatilities")
+# Viterbi algorithm
+# N = 3
+states3 <- viterbi(obs_new2, c(model3$mu1), c(model3$mu2), c(model3$mu3), 
+                   c(model3$sigma1), c(model3$sigma2), c(model3$sigma3),
+                   c(model3$gamma), c(model3$delta), 3)
+
+
+###
+# Viterbi decoded plots
+# neuer Vektor mit Farben je nach State
+col2 <- states2
+col2[which(col2 == 1)] <- colpal[1]
+col2[which(col2 == 2)] <- colpal[2]
+
+## 2 states
+plot(obs_new2$divetim, type = 'h', col= col2, xlab = 'Dives', ylab = 'Divetime', main = 'Viterbi color-coded Divetimes')
+plot(obs_new2$maxdep, type = 'h', col=col2)
+plot(obs_new2$postdive.dur, type = 'h', col=col2)
+
+# 3 states
+col3 <- states3
+col3[which(col3 == 1)] <- colpal[1]
+col3[which(col3 == 2)] <- colpal[2]
+col3[which(col3 == 3)] <- colpal[3]
+
+plot(obs_new2$divetim, type = 'h', col= col3, xlab = 'Dives', ylab = 'Divetime', main = 'Viterbi color-coded Divetimes')
+plot(obs_new2$maxdep, type = 'h', col=col3)
+plot(obs_new2$postdive.dur, type = 'h', col=col3)
+
+
+
+###
+
 
 
 
