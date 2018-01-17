@@ -15,6 +15,9 @@ whaledata <- read.csv("dive_stats_170921.csv")
 #obs <- obs[(obs$divetim > 1),]
 obs <- whaledata[, c(4, 6, 7)]
 
+obs_new <- obs
+obs_new$divetim <- obs$divetim + runif(length(obs$divetim), -0.5, 0.5)
+obs_new$maxdep <- obs$maxdep - 5
 
 ## function that converts 'natural' parameters (possibly constrained) to 'working' parameters (all of which are real-valued) - this is only necessary since I use the unconstrained optimizer nlm() below 
 # mu & kappa: von Mises distr.
@@ -164,24 +167,37 @@ whale_dive_rmod2 <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2
                   c(runif(2, 0, 1)), 2)
 
 # 3 states
-whale_dive_rmod3 <- mle(obs, c(runif(3, 1, 250)), c(runif(3, 1, 120)), c(runif(3, 1, 600)),
-                   c(runif(3, 1, 100)), c(runif(3, 1, 50)), c(runif(3, 1, 100)), 
-                   c(runif(3, 0, 1)), 3)
+whale_dive_rmod3 <- mle(obs, c(runif(3, 1, 300)), c(runif(3, 1, 150)), c(runif(3, 1, 600)),
+                   c(runif(3, 1, 200)), c(runif(3, 1, 100)), c(runif(3, 1, 200)), 
+                   c(runif(6, 0, 1)), 3)
 
+whale_dive_new_rmod3 <- mle(obs_new, c(runif(3, 1, 300)), c(runif(3, 1, 150)), c(runif(3, 1, 600)),
+                        c(runif(3, 1, 200)), c(runif(3, 1, 100)), c(runif(3, 1, 200)), 
+                        c(runif(6, 0, 1)), 3)
 
-## Dealing with lokal maxima
-# 2 states:
+##### Dealing with lokal maxima
+### 2 states:
 llks<-rep(NA,10)
-mods<-vector("list")
+mods2 <- vector("list")
 for (k in 1:10){
-  mods[[k]] <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2, 1, 600)),
+  mods2[[k]] <- mle(obs_new, c(runif(2, 1, 400)), c(runif(2, 1, 120)), c(runif(2, 1, 600)),
                    c(runif(2, 1, 100)), c(runif(2, 1, 50)), c(runif(2, 1, 100)), 
-                   c(runif(2, 0, 1)), c(runif(2, 0, 1)), 2)
-  llks[k] <- -mods[[k]]$mllk #minimum
+                   c(runif(2, 0, 1)), 2)
+  llks[k] <- -mods2[[k]]$mllk #minimum
 }
-mods[[which.max(llks)]]
+model2 <- mods2[[which.max(llks)]]
 
 
+### 3 states:
+llks<-rep(NA,10)
+mods3 <- vector("list")
+for (k in 1:10){
+  mods3[[k]] <- mle(obs_new, c(runif(3, 1, 250)), c(runif(3, 1, 120)), c(runif(3, 1, 600)),
+                    c(runif(3, 1, 100)), c(runif(3, 1, 50)), c(runif(3, 1, 100)), 
+                    c(runif(6, 0, 1)), 3)
+  llks[k] <- -mods3[[k]]$mllk #minimum
+}
+model3 <- mods3[[which.max(llks)]]
 
 
 #####################################
