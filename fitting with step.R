@@ -8,9 +8,10 @@ require(moveHMM)
 
 setwd("C:/Users/Patrick/Desktop/Whale")
 #setwd("~/Uni/(M.Sc.) 3. Semester/Statistical Consulting/Minke whale project")
-whaledata <- read.csv("whale_data_cleaned.csv")
-whaledata <- read.csv("whale_data_cleaned_k2000.csv")
-whaledata <- read.csv("whale_data_cleaned_k2000_speed.csv")
+#whaledata <- read.csv("whale_data_cleaned.csv")
+#whaledata <- read.csv("whale_data_cleaned_k2000.csv")
+#whaledata <- read.csv("whale_data_cleaned_k2000_speed.csv")
+whaledata <- read.csv("whale_data_cleaned_step.csv")
 
 #obs <- whaledata[(7:3583), c(5, 7, 8, 13, 14)]
 #obs <- obs[(obs$divetim > 1),]
@@ -90,11 +91,11 @@ L<-function(parvect, obs, N){ # parvect as working parameters with (divetim,maxd
   for (j in 1:N){
     allprobs[,j] <-
       (pgamma(obs$divetim +0.5, shape = mu.divetim[j]^2/sigma.divetim[j]^2, scale = sigma.divetim[j]^2/mu.divetim[j])-
-      pgamma(obs$divetim -0.5, shape = mu.divetim[j]^2/sigma.divetim[j]^2, scale = sigma.divetim[j]^2/mu.divetim[j]))*
+         pgamma(obs$divetim -0.5, shape = mu.divetim[j]^2/sigma.divetim[j]^2, scale = sigma.divetim[j]^2/mu.divetim[j]))*
       dgamma(obs$maxdep, shape = mu.maxdep[j]^2/sigma.maxdep[j]^2, scale = sigma.maxdep[j]^2/mu.maxdep[j])*
       ma[,j]*
       ma2[,j]
-      #dgamma(obs$postdive.dur, shape = mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2, scale = sigma.postdive.dur[j]^2/mu.postdive.dur[j])*
+    #dgamma(obs$postdive.dur, shape = mu.postdive.dur[j]^2/sigma.postdive.dur[j]^2, scale = sigma.postdive.dur[j]^2/mu.postdive.dur[j])*
   }
   foo <- delta%*%diag(allprobs[1,])
   l <- log(sum(foo))
@@ -178,38 +179,47 @@ fitmult <- function(obs, n_fits, N){
 ###########################
 # 2 states
 whale_mod2withstep <- mle(obs, c(30, 200), c(20, 80), c(100, 600), c(10, 1000),
-                         c(25, 70), c(10, 20), c(50, 90), c(50, 500), c(0.9, 0.8), c(0.25, 0.25), 2)
+                          c(25, 70), c(10, 20), c(50, 90), c(50, 500), c(0.9, 0.8), c(0.25, 0.25), 2)
 
 # 3 states
 whale_mod3withstep <- mle(obs, c(30, 150, 250), c(20, 80, 110), c(50, 100, 600), c(10, 500, 1000),
-                  c(25, 60, 70), c(10, 20, 30), c(30, 90, 100), c(50, 100, 500), c(0.5, 0.4, 0.3, 0.2, 0.25, 0.1), c(0.25, 0.25, 0.25), 3)
+                          c(25, 60, 70), c(10, 20, 30), c(30, 90, 100), c(50, 100, 500), c(0.5, 0.4, 0.3, 0.2, 0.25, 0.1), c(0.25, 0.25, 0.25), 3)
 
 
 ## zufällig gezogene Startwerte:
 # 2 states
-whale_rmod2withstep <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2, 1, 600)), c(runif(2, 1, 1000)),
-                   c(runif(2, 1, 100)), c(runif(2, 1, 50)), c(runif(2, 1, 100)), c(runif(2, 1, 500)), 
-                   c(runif(2, 0, 1)), c(runif(2, 0, 1)), 2)
+whale_rmod2withstep <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2, 1, 600)), c(runif(2, 0.01, 100)),
+                           c(runif(2, 1, 100)), c(runif(2, 1, 50)), c(runif(2, 1, 100)), c(runif(2, 1, 500)), 
+                           c(runif(2, 0, 1)), c(runif(2, 0, 1)), 2)
 
 # 3 states
-whale_rmod3withstep <- mle(obs, c(runif(3, 1, 250)), c(runif(3, 1, 120)), c(runif(3, 1, 600)), c(runif(3, 1, 1000)),
-                   c(runif(3, 1, 100)), c(runif(3, 1, 50)), c(runif(3, 1, 100)), c(runif(3, 1, 500)), 
-                   c(runif(6, 0, 1)), c(runif(3, 0, 1)), 3)
+whale_rmod3withstep <- mle(obs, c(runif(3, 1, 250)), c(runif(3, 1, 120)), c(runif(3, 1, 600)), c(runif(3, 0.01, 100)),
+                           c(runif(3, 1, 100)), c(runif(3, 1, 50)), c(runif(3, 1, 100)), c(runif(3, 1, 500)), 
+                           c(runif(6, 0, 1)), c(runif(3, 0, 1)), 3)
 
 
 ## Dealing with lokal maxima
 # 2 states:
 llks<-rep(NA,10)
-mods<-vector("list")
+mods2_step <- vector("list")
 for (k in 1:10){
-  mods[[k]] <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2, 1, 600)), c(runif(2, 1, 1000)),
+  mods2_step[[k]] <- mle(obs, c(runif(2, 1, 250)), c(runif(2, 1, 120)), c(runif(2, 1, 600)), c(runif(2, 0.01, 100)),
                    c(runif(2, 1, 100)), c(runif(2, 1, 50)), c(runif(2, 1, 100)), c(runif(2, 1, 500)), 
                    c(runif(2, 0, 1)), c(runif(2, 0, 1)), 2)
-  llks[k] <- -mods[[k]]$mllk #minimum
+  llks[k] <- -mods2_step[[k]]$mllk #minimum
 }
-mods[[which.max(llks)]]
+model2_step <- mods2_step[[which.max(llks)]]
 
-
+# 3 states:
+llks<-rep(NA,10)
+mods3_step <- vector("list")
+for (k in 1:10){
+  mods3_step[[k]] <- mle(obs, c(runif(3, 1, 250)), c(runif(3, 1, 120)), c(runif(3, 1, 600)), c(runif(3, 0.01, 100)),
+                         c(runif(3, 1, 100)), c(runif(3, 1, 50)), c(runif(3, 1, 100)), c(runif(3, 1, 500)), 
+                         c(runif(6, 0, 1)), c(runif(3, 0, 1)), 3)
+  llks[k] <- -mods3_step[[k]]$mllk #minimum
+}
+model3_step <- mods3_step[[which.max(llks)]]
 
 
 #####################################
@@ -278,3 +288,6 @@ speed <- obs$step / obs$divetim
 boxplot(speed)
 which(speed > 11)
 summary(speed)
+speed_kmh <- speed * 3.6
+summary(speed_kmh)
+
